@@ -17,7 +17,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    defaultSchema: booking_service
+    defaultSchema: booking
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
