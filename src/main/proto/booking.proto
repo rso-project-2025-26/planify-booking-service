@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.planify.booking_service.grpc";
+option java_outer_classname = "BookingProto";
+
+service BookingService {
+  rpc CheckAvailability (CheckAvailabilityRequest) returns (CheckAvailabilityResponse);
+  rpc CreateBooking (CreateBookingRequest) returns (CreateBookingResponse);
+  rpc CancelBooking (CancelBookingRequest) returns (CancelBookingResponse);
+  rpc GetBooking (GetBookingRequest) returns (GetBookingResponse);
+}
+
+message CheckAvailabilityRequest {
+  string location_id = 1;
+  int64 start_epoch_millis = 2;
+  int64 end_epoch_millis = 3;
+}
+
+message CheckAvailabilityResponse {
+  bool available = 1;
+  repeated string conflicting_booking_ids = 2;
+}
+
+message CreateBookingRequest {
+  string location_id = 1;
+  string event_id = 2;
+  string organization_id = 3; // UUID
+  int64 start_epoch_millis = 4;
+  int64 end_epoch_millis = 5;
+  string currency = 6; // e.g. EUR
+}
+
+message CreateBookingResponse {
+  string booking_id = 1;
+  string status = 2;
+  bool available = 3;
+  repeated string conflicts = 4;
+  int32 total_amount_cents = 5;
+}
+
+message CancelBookingRequest {
+  string booking_id = 1;
+}
+
+message CancelBookingResponse {
+  string status = 1;
+}
+
+message GetBookingRequest {
+  string booking_id = 1;
+}
+
+message GetBookingResponse {
+  string booking_id = 1;
+  string location_id = 2;
+  string event_id = 3;
+  string organization_id = 4;
+  int64 start_epoch_millis = 5;
+  int64 end_epoch_millis = 6;
+  string status = 7;
+  int32 total_amount_cents = 8;
+  string currency = 9;
+}
