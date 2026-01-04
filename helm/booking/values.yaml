@@ -13,6 +13,10 @@ service:
   port: 8086
   targetPort: 8086
 
+grpc:
+  port: 9095
+  targetPort: 9095
+
 resources:
   requests:
     memory: "512Mi"
@@ -36,44 +40,26 @@ probes:
     failureThreshold: 3
 
 config:
+  springProfilesActive: prod
+  
   serverPort: "8086"
   database:
     url: "jdbc:postgresql://postgres-service:5432/planify"
     schema: "booking"
-    poolSize: "10"
-    poolMinIdle: "5"
-    connTimeout: "30000"
-  jpa:
-    ddlAuto: "validate"
-    showSql: "false"
-  keycloak:
-    url: "http://keycloak-service:8080"
-    realm: "planify"
-    issuerUri: "http://keycloak-service:8080/realms/planify"
-    jwkSetUri: "http://keycloak-service:8080/realms/planify/protocol/openid-connect/certs"
   kafka:
     bootstrapServers: "kafka-service:9092"
-    consumerGroup: "booking-service"
-    autoOffsetReset: "earliest"
     topicBookingCreated: "booking-created"
     topicBookingEvents: "booking.events"
-  flyway:
-    enabled: "true"
-  swagger:
-    enabled: "true"
+  keycloak:
+    issuerUri: "http://keycloak-service:8080/realms/planify"
+    jwkSetUri: "http://keycloak-service:8080/realms/planify/protocol/openid-connect/certs"
+  
+  jpa:
+    showSql: "false"
+  management:
+    endpointsInclude: "health,prometheus,info,metrics"
   logging:
-    levelRoot: "INFO"
+    levelRoot: "WARN"
     levelApp: "INFO"
     levelSpringWeb: "WARN"
     levelSpringSecurity: "WARN"
-    levelHibernateSql: "WARN"
-  springProfilesActive: "prod"
-
-secrets:
-  database:
-    username: "planify"
-    password: "planify123"
-
-grpc:
-  port: 9095
-  targetPort: 9095
