@@ -4,6 +4,9 @@ import com.planify.booking_service.domain.*;
 import com.planify.booking_service.messaging.BookingEventProducer;
 import com.planify.booking_service.repository.BookingRepository;
 import com.planify.booking_service.repository.LocationRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -47,12 +50,22 @@ public class BookingDomainService {
     }
 
     @Transactional(readOnly = true)
+    @Retry(name = "availabilityService")
+    @CircuitBreaker(name = "availabilityService", fallbackMethod = "isAvailableFallback")
     public boolean isAvailable(UUID locationId, LocalDateTime start, LocalDateTime end) {
         log.info("Checking availability for location {} between {} and {}", locationId, start, end);
         return availabilityService.isAvailable(locationId, start, end);
     }
 
+    private boolean isAvailableFallback(UUID locationId, LocalDateTime start, LocalDateTime end, Exception ex) {
+        log.error("Availability check failed for location {}. Error: {}", locationId, ex.getMessage());
+        return false; // Fail-safe: Predpostavimo, da lokacija ni na voljo
+    }
+
     @Transactional
+    @Retry(name = "bookingCreation")
+    @Bulkhead(name = "bookingCreation")
+    @CircuitBreaker(name = "bookingCreation", fallbackMethod = "createBookingFallback")
     public CreateBookingResult createBooking(CreateBookingCommand cmd) {
         log.info("Creating booking for location {} between {} and {}", cmd.getLocationId(), cmd.getStart(), cmd.getEnd());
         var conflicts = availabilityService.findConflicts(cmd.getLocationId(), cmd.getStart(), cmd.getEnd());
@@ -111,7 +124,20 @@ public class BookingDomainService {
             .build();
     }
 
+    private CreateBookingResult createBookingFallback(CreateBookingCommand cmd, Exception ex) {
+        log.error("Booking creation failed for location {}. Error: {}", cmd.getLocationId(), ex.getMessage());
+        return CreateBookingResult.builder()
+            .bookingId(null)
+            .status(BookingStatus.FAILED)
+            .available(false)
+            .conflicts(List.of())
+            .totalAmountCents(0)
+            .build();
+    }
+
     @Transactional
+    @Retry(name = "bookingCancellation")
+    @CircuitBreaker(name = "bookingCancellation", fallbackMethod = "cancelBookingFallback")
     public Booking cancelBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
             .orElseThrow(() -> {
@@ -127,5 +153,10 @@ public class BookingDomainService {
             "type", "booking_cancelled"
         ));
         return booking;
+    }
+    
+    private Booking cancelBookingFallback(UUID bookingId, Exception ex) {
+        log.error("Failed to cancel booking {}. Error: {}", bookingId, ex.getMessage());
+        throw new RuntimeException("Booking cancellation temporarily unavailable");
     }
 }

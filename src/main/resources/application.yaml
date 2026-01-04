@@ -73,3 +73,146 @@ grpc:
   server:
     port: 9095
     reflection-service-enabled: true
+
+# Resilience4j Configuration for Fault Tolerance
+resilience4j:
+  circuitbreaker:
+    instances:
+      availabilityService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCreation:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 15s
+        failureRateThreshold: 40
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCancellation:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      eventManagerService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - io.grpc.StatusRuntimeException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+      defaultCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+  retry:
+    instances:
+      availabilityService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCreation:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCancellation:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      eventManagerService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - io.grpc.StatusRuntimeException
+          - java.io.IOException
+      defaultRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+  bulkhead:
+    instances:
+      bookingCreation:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 5s
+      eventManagerService:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 1s
+      defaultBulkhead:
+        maxConcurrentCalls: 25
+        maxWaitDuration: 0
+
+  ratelimiter:
+    instances:
+      eventManagerService:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+      defaultRateLimiter:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+
+  timelimiter:
+    instances:
+      eventManagerService:
+        timeoutDuration: 5s
+      defaultTimeLimiter:
+        timeoutDuration: 3s
