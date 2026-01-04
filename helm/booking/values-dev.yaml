@@ -1,0 +1,21 @@
+config:
+  springProfilesActive: dev  
+  jpa:
+    showSql: "true"
+  management:
+    endpointsInclude: "*"  
+  logging:
+    levelRoot: "INFO"
+    levelApp: "DEBUG"
+    levelSpringWeb: "INFO"
+    levelSpringSecurity: "DEBUG"
+
+replicaCount: 1
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+    cpu: "250m"

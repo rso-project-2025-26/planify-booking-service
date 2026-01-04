@@ -27,11 +27,12 @@ spec:
         ports:
         - containerPort: {{ .Values.service.targetPort }}
         - containerPort: {{ .Values.grpc.targetPort }}
+          name: grpc
         envFrom:
         - configMapRef:
             name: booking-service-config
         - secretRef:
-            name: booking-service-secrets
+            name: postgres-secret
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory | quote }}
