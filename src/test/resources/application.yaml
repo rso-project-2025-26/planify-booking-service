@@ -1,0 +1,218 @@
+server:
+  port: ${SERVER_PORT:8086}
+
+spring:
+  application:
+    name: booking-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/planify}
+    username: ${SPRING_DATASOURCE_USERNAME:planify}
+    password: ${SPRING_DATASOURCE_PASSWORD:planify}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: ${DB_SCHEMA:booking}
+    show-sql: ${JPA_SHOW_SQL:false}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9080/realms/planify}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:9080/realms/planify/protocol/openid-connect/certs}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    schemas: ${DB_SCHEMA:booking}
+    default-schema: ${DB_SCHEMA:booking}
+    create-schema: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health,prometheus,info,metrics}
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+kafka:
+  topics:
+    booking-created: ${KAFKA_TOPIC_BOOKING_CREATED:booking-created}
+    booking-events: ${KAFKA_TOPIC_BOOKING_EVENTS:booking.events}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.planify: ${LOG_LEVEL_APP:INFO}
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:WARN}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:WARN}
+
+grpc:
+  server:
+    port: 9095
+    reflection-service-enabled: true
+
+# Resilience4j Configuration for Fault Tolerance
+resilience4j:
+  circuitbreaker:
+    instances:
+      availabilityService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCreation:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 15s
+        failureRateThreshold: 40
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCancellation:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      eventManagerService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - io.grpc.StatusRuntimeException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+      defaultCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+  retry:
+    instances:
+      availabilityService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCreation:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      bookingCancellation:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - org.springframework.dao.DataAccessException
+      eventManagerService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.lang.Exception
+          - java.lang.RuntimeException
+          - io.grpc.StatusRuntimeException
+          - java.io.IOException
+      defaultRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+  bulkhead:
+    instances:
+      bookingCreation:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 5s
+      eventManagerService:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 1s
+      defaultBulkhead:
+        maxConcurrentCalls: 25
+        maxWaitDuration: 0
+
+  ratelimiter:
+    instances:
+      eventManagerService:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+      defaultRateLimiter:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+
+  timelimiter:
+    instances:
+      eventManagerService:
+        timeoutDuration: 5s
+      defaultTimeLimiter:
+        timeoutDuration: 3s
