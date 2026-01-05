@@ -34,7 +34,6 @@ public class LocationController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved list of locations",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = Location.class))),
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token", content = @Content),
-        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions", content = @Content)
     })
     @GetMapping
     public ResponseEntity<List<Location>> getAllActive() {
@@ -50,11 +49,10 @@ public class LocationController {
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = Location.class))),
         @ApiResponse(responseCode = "404", description = "Location not found", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token", content = @Content),
-        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions", content = @Content)
     })
     @GetMapping("/{id}")
     public ResponseEntity<Location> getById(
-            @Parameter(description = "UUID of the location to retrieve", required = true)
+            @Parameter(required = true)
             @PathVariable UUID id) {
         return locationRepository.findById(id)
                 .map(ResponseEntity::ok)
