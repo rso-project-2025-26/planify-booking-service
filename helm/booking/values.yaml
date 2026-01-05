@@ -57,7 +57,7 @@ config:
   jpa:
     showSql: "false"
   management:
-    endpointsInclude: "health,prometheus,info,metrics"
+    endpointsInclude: "health,prometheus,info,metrics,liveness,readiness"
   logging:
     levelRoot: "WARN"
     levelApp: "INFO"
