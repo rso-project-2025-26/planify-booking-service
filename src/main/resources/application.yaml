@@ -1,5 +1,7 @@
 server:
   port: ${SERVER_PORT:8086}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/}
 
 spring:
   application:
@@ -61,6 +63,17 @@ kafka:
   topics:
     booking-created: ${KAFKA_TOPIC_BOOKING_CREATED:booking-created}
     booking-events: ${KAFKA_TOPIC_BOOKING_EVENTS:booking.events}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: ${SWAGGER_ENABLED:true}
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
 
 logging:
   level:

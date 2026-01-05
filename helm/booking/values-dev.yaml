@@ -10,6 +10,9 @@ config:
     levelSpringWeb: "INFO"
     levelSpringSecurity: "DEBUG"
 
+  swagger:
+    enabled: "true"
+
 replicaCount: 1
 
 resources:
