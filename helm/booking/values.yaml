@@ -66,6 +66,3 @@ config:
 
   swagger:
     enabled: "false"
-
-  context:
-    path: "/booking-service"
