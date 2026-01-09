@@ -1,0 +1,68 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/rso-project-2025-26/planify-booking-service
+  tag: main
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+service:
+  type: ClusterIP
+  port: 8086
+  targetPort: 8086
+
+grpc:
+  port: 9095
+  targetPort: 9095
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+probes:
+  liveness:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 90
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+config:
+  springProfilesActive: prod
+  
+  serverPort: "8086"
+  database:
+    url: "jdbc:postgresql://postgres-service:5432/planify"
+    schema: "booking"
+  kafka:
+    bootstrapServers: "kafka-service:9092"
+    topicBookingCreated: "booking-created"
+    topicBookingEvents: "booking.events"
+  keycloak:
+    issuerUri: "https://4.185.235.181.nip.io/keycloak/realms/planify"
+    jwkSetUri: "http://keycloak-service:8080/keycloak/realms/planify/protocol/openid-connect/certs"
+  
+  jpa:
+    showSql: "false"
+  management:
+    endpointsInclude: "health,prometheus,info,metrics,liveness,readiness"
+  logging:
+    levelRoot: "WARN"
+    levelApp: "INFO"
+    levelSpringWeb: "WARN"
+    levelSpringSecurity: "WARN"
+
+  swagger:
+    enabled: "false"

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-service-config
+data:
+  SERVER_PORT: {{ .Values.config.serverPort | quote }}
+  DB_URL: {{ .Values.config.database.url | quote }}
+  DB_SCHEMA: {{ .Values.config.database.schema | quote }}
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
+  KEYCLOAK_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
+  KEYCLOAK_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
+  KAFKA_TOPIC_BOOKING_CREATED: {{ .Values.config.kafka.topicBookingCreated | quote }}
+  KAFKA_TOPIC_BOOKING_EVENTS: {{ .Values.config.kafka.topicBookingEvents | quote }}  
+  JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
+  MANAGEMENT_ENDPOINTS_INCLUDE: {{ .Values.config.management.endpointsInclude | quote }}
+  SWAGGER_ENABLED: {{ .Values.config.swagger.enabled | quote }}
+  LOG_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
+  LOG_LEVEL_APP: {{ .Values.config.logging.levelApp | quote }}
+  LOG_LEVEL_SPRING_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
+  LOG_LEVEL_SPRING_SECURITY: {{ .Values.config.logging.levelSpringSecurity | quote }}
